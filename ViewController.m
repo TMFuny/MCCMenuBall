@@ -8,7 +8,11 @@
 
 #import "ViewController.h"
 #import "SCNewtonsCradleView.h"
+#import "MCCMenuBall.h"
+#import "MCCMonitorBall.h"
 
+#define kScreenWidth  [UIScreen mainScreen].bounds.size.width
+#define kScreenHeight [UIScreen mainScreen].bounds.size.height
 @interface ViewController ()<UICollisionBehaviorDelegate>
 @property (nonatomic, strong)UIView *square;
 @property (nonatomic, strong)UIDynamicAnimator *animator;
@@ -20,7 +24,10 @@
 @property (nonatomic, strong)SCNewtonsCradleView *newtonsCradle;
 @end
 
-@implementation ViewController
+@implementation ViewController {
+  MCCMonitorBall *_monitorBall;
+  MCCMenuBall    *_menuBall;
+}
 
 - (void)viewDidLoad {
   [super viewDidLoad];
@@ -28,11 +35,58 @@
   //  _newtonsCradle = [[SCNewtonsCradleView alloc] initWithFrame:self.view.bounds];
   //  [self.view addSubview:_newtonsCradle];
   [self showDynamic1];
-  
+  [self initMonitorBall];
+  [self initMenuBall];
   // Do any additional setup after loading the view, typically from a nib.
 }
+- (void)initMenuBall {
+  _menuBall = [[MCCMenuBall alloc] initWithFrame:CGRectMake(kScreenWidth-12-40, kScreenHeight-67-40, 40, 40) image:[UIImage imageNamed:@"wv_fullScreen"]];
+  _menuBall.momentary = NO;
+  _menuBall.backgroundColor = [UIColor greenColor];
+  [_menuBall addTarget:self action:@selector(onTouchMenuBall:) forControlEvents:UIControlEventTouchUpInside];
+  [self.view addSubview:_menuBall];
+}
 
+- (void) initMonitorBall {
 
+  _monitorBall = [[MCCMonitorBall alloc] initWithTitle:@"This is a test string"];
+  _monitorBall.leading = 5;
+  _monitorBall.trailing = 30;
+  [self.view addSubview:_monitorBall];
+  _monitorBall.translatesAutoresizingMaskIntoConstraints = NO;
+  
+  [self.view addConstraint:[NSLayoutConstraint constraintWithItem:_monitorBall
+                                                        attribute:NSLayoutAttributeLeading
+                                                        relatedBy:NSLayoutRelationEqual
+                                                           toItem:self.view
+                                                        attribute:NSLayoutAttributeLeading
+                                                       multiplier:1 constant:0]];
+  
+  [self.view addConstraint:[NSLayoutConstraint constraintWithItem:_monitorBall
+                                                        attribute:NSLayoutAttributeHeight
+                                                        relatedBy:NSLayoutRelationEqual
+                                                           toItem:nil
+                                                        attribute:NSLayoutAttributeHeight
+                                                       multiplier:1 constant:23]];
+  
+  [self.view addConstraint:[NSLayoutConstraint constraintWithItem:_monitorBall
+                                                        attribute:NSLayoutAttributeBottom
+                                                        relatedBy:NSLayoutRelationEqual
+                                                           toItem:self.view
+                                                        attribute:NSLayoutAttributeBottom
+                                                       multiplier:1 constant:-60]];
+
+  
+  [_monitorBall addTarget:self action:@selector(onTouchMonitorBall:) forControlEvents:UIControlEventTouchUpInside];
+}
+
+- (void)onTouchMonitorBall:(MCCMonitorBall *)monitorBall {
+  NSLog(@"touch MonitorBall");
+}
+
+- (void)onTouchMenuBall:(MCCMenuBall *)menuBall {
+  NSLog(@"touch MenuBall");
+}
 - (void)showDynamic1 {
   [self addSquareView];
   //  [self addBarrierView];
