@@ -31,18 +31,17 @@
 
 - (void)viewDidLoad {
   [super viewDidLoad];
-  
+  self.view.backgroundColor = [UIColor blueColor];
   //  _newtonsCradle = [[SCNewtonsCradleView alloc] initWithFrame:self.view.bounds];
   //  [self.view addSubview:_newtonsCradle];
-  [self showDynamic1];
-  [self initMonitorBall];
+//  [self showDynamic1];
+//  [self initMonitorBall];
   [self initMenuBall];
   // Do any additional setup after loading the view, typically from a nib.
 }
 - (void)initMenuBall {
   _menuBall = [[MCCMenuBall alloc] initWithFrame:CGRectMake(kScreenWidth-12-40, kScreenHeight-67-40, 40, 40) image:[UIImage imageNamed:@"wv_fullScreen"]];
   _menuBall.momentary = NO;
-  _menuBall.backgroundColor = [UIColor greenColor];
   [_menuBall addTarget:self action:@selector(onTouchMenuBall:) forControlEvents:UIControlEventTouchUpInside];
   [self.view addSubview:_menuBall];
 }

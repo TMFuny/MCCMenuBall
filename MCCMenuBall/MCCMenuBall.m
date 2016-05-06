@@ -24,8 +24,10 @@ static const float kMCCMenuBallAlpha = 1.0f;
 static const float kMCCMenuBallHidenAlpha = 0.0f;
 static const float kMCCMenuBallAnimateDuration = 0.3f;
 
+#define wspxUILog     (0) //0:open UILog 1:close UILog
+#define wspxFuncTest  (0) //0:open funcTest 1:close funcTest
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 @implementation MCCMenuBall
-
 #pragma mark - ViewLifeCycle
 - (void)dealloc {
   [self unregisterForDeviceOrientationChangeNotification];
@@ -37,11 +39,13 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
   if (self) {
     _draggable = YES;
     _momentary = YES;
+    _adsorption = YES;
     _ratioX = self.center.x / [UIScreen mainScreen].bounds.size.width;
     _ratioY = self.center.y / [UIScreen mainScreen].bounds.size.height;
     
     _defaultPosition = CGPointMake(0, 0);
     _margin = UIEdgeInsetsMake(5, 5, 5, 5);
+    _mTouchEdgeInsets = UIEdgeInsetsZero;
     _rotationTransform = CGAffineTransformIdentity;
     [self configBackGroundImageView:image];
     [self addDragGestureRecognizer];
@@ -66,9 +70,18 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
 }
 #pragma mark - UIUpdate
 #pragma mark - AppleDataSource and Delegate
-
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+  if (self.isHidden) {
+    return nil;
+  }
+  CGRect expandedFrame = CGRectMake(0 - _mTouchEdgeInsets.left , 0 - _mTouchEdgeInsets.top , self.frame.size.width + (_mTouchEdgeInsets.left + _mTouchEdgeInsets.right) , self.frame.size.height + (_mTouchEdgeInsets.top + _mTouchEdgeInsets.bottom));
+  return (CGRectContainsPoint(expandedFrame, point) == 1) ? self : nil;
+}
 #pragma mark - UIGestureRecognizerDelegate
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
+  if (self.isHidden) {
+    return NO;
+  }
   if (!_draggable) {
     return NO;
   }
@@ -94,10 +107,11 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
       break;
     case UIGestureRecognizerStateEnded:
     {
-      if (!CGRectContainsRect(self.superview.bounds, self.frame)) {
+      if (_adsorption) {
+        [self adjustFrameWithAnimate:NO];
+      } else if (!CGRectContainsRect(self.superview.bounds, self.frame)) {
         [self adjustFrameWithAnimate:NO];
       }
-      [self savePosition];
     }
       break;
     case UIGestureRecognizerStateCancelled:
@@ -144,6 +158,9 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
 #pragma mark - PrivateMethod
 - (void)savePosition {
   NSString *selfPosition = NSStringFromCGPoint(self.center);
+#if  wspxUILog
+  NSLog(@"savePosition:%@", selfPosition);
+#endif
   [[NSUserDefaults standardUserDefaults] setObject:selfPosition forKey:kMCCMenuBallMomentaryPosition];
   [[NSUserDefaults standardUserDefaults] synchronize];
 }
@@ -160,42 +177,112 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
 - (void)adjustCenter:(CGPoint)center {
   self.center = center;
 }
+
 - (void)adjustFrameWithAnimate:(BOOL)animate {
   CGFloat radiu = _backGroundImageView.image.size.width/2;
   CGSize superViewSize = self.superview.bounds.size;
+  if (!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+    UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
+    if (UIDeviceOrientationIsLandscape(orientation)) {
+      superViewSize.width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+      superViewSize.height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+    }
+    if (UIDeviceOrientationIsPortrait(orientation)) {
+      superViewSize.width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+      superViewSize.height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+    }
+    
+  }
   CGRect newFrame = self.frame;
   
   if (self.center.x < radiu) {
     newFrame.origin.x = 0 + _margin.left;
+#if  wspxUILog
+    NSLog(@"超出左边");
+#endif
   }
+  
   if (self.center.x>superViewSize.width-radiu) {
     newFrame.origin.x = superViewSize.width-2*radiu - _margin.right;
+#if  wspxUILog
+    NSLog(@"超出右边");
+#endif
   }
+  
+  if (_adsorption) {
+    CGPoint superViewCenter = self.superview.center;
+    CGFloat trailingCriticalValue = superViewSize.width - radiu - _margin.right;
+    CGFloat leadingCriticalValue = radiu + _margin.left;
+    
+    if (self.center.x > leadingCriticalValue && self.center.x < trailingCriticalValue) {
+      
+      CGFloat newX = self.center.x - superViewCenter.x>0?(superViewSize.width - 2*radiu - _margin.right):_margin.left;
+      newFrame.origin.x = newX;
+#if  wspxUILog
+      NSLog(@"在中间");
+#endif
+    }
+  }
+  
   if (self.center.y < radiu) {
     newFrame.origin.y = 0 + _margin.top;
+#if  wspxUILog
+    NSLog(@"超出上边");
+#endif
   }
+  
   if (self.center.y > superViewSize.height - radiu) {
     newFrame.origin.y = superViewSize.height - 2*radiu - _margin.bottom;
+#if  wspxUILog
+    NSLog(@"超出下边");
+#endif
   }
+  
+  if (CGRectEqualToRect(CGRectIntegral(newFrame), CGRectIntegral(self.frame))) {
+    NSLog(@"ggg");
+  }
+  if (CGPointEqualToPoint(newFrame.origin, self.frame.origin)) {
+    return;
+  }
+  
   if (animate) {
+    __weak typeof(self) weakSelf = self;
     
     [UIView animateWithDuration:kMCCMenuBallAnimateDuration animations:^{
       self.alpha = kMCCMenuBallHidenAlpha;
     } completion:^(BOOL finished) {
       self.frame = newFrame;
+      [weakSelf savePosition];
       [UIView animateWithDuration:kMCCMenuBallAnimateDuration animations:^{
         self.alpha = kMCCMenuBallAlpha;
       }];
     }];
+    
     return;
   }
   self.frame = newFrame;
+  [self savePosition];
 }
 
 - (void)setCenter:(CGPoint)center {
   [super setCenter:center];
-  _ratioX = self.center.x / [UIScreen mainScreen].bounds.size.width;
-  _ratioY = self.center.y / [UIScreen mainScreen].bounds.size.height;
+  CGFloat width = [UIScreen mainScreen].bounds.size.width;
+  CGFloat height = [UIScreen mainScreen].bounds.size.height;
+  
+  if (!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+    UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
+    if (UIDeviceOrientationIsLandscape(orientation)) {
+      width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+      height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+    }
+    if (UIDeviceOrientationIsPortrait(orientation)) {
+      width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+      height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+    }
+    
+  }
+  _ratioX = self.center.x / width;
+  _ratioY = self.center.y / height;
 }
 
 - (void)addDragGestureRecognizer {
@@ -204,36 +291,152 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
 }
 
 - (void)registerForDeviceOrientationChangeNotification {
+#if !wspxFuncTest
   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deviceOrientationDidChange:) name:UIDeviceOrientationDidChangeNotification object:nil];
+#else
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(logForDeviceOrientationchangeNotification:) name:UIDeviceOrientationDidChangeNotification object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(logForStatusBarOrientationNotification:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(logForStatusBarFrameNotification:) name:UIApplicationDidChangeStatusBarFrameNotification object:nil];
+#endif
 }
 
 - (void)unregisterForDeviceOrientationChangeNotification {
+#if !wspxFuncTest
   [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
+#else
+  [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
+  [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
+  [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidChangeStatusBarFrameNotification object:nil];
+#endif
+}
+
+- (void)logForDeviceOrientationchangeNotification:(NSNotification *)notification {
+  NSLog(@"%s ", __PRETTY_FUNCTION__);
+  NSLog(@"------>");
+  [self logForOrientation];
+  NSLog(@"<------");
+}
+- (void)logForStatusBarOrientationNotification:(NSNotification *)notification {
+  NSLog(@"%s ", __PRETTY_FUNCTION__);
+  NSLog(@"------>");
+  [self logForOrientation];
+  NSLog(@"<------");
+}
+- (void)logForStatusBarFrameNotification:(NSNotification *)notification {
+  NSLog(@"%s ", __PRETTY_FUNCTION__);
+  NSLog(@"------>");
+  [self logForOrientation];
+  NSLog(@"<------");
 }
 
 - (void)deviceOrientationDidChange:(NSNotification *)notification {
+  if (self.isHidden) {
+    return;
+  }
   UIView *superview = self.superview;
   if (!superview) {
     return;
   } else {
-    NSLog(@"%s, OrientationChanged", __PRETTY_FUNCTION__);
-    CGPoint newCenter = CGPointMake(_ratioX*[UIScreen mainScreen].bounds.size.width, _ratioY*[UIScreen mainScreen].bounds.size.height);
+
+    [self logForOrientation];
+#if wspxUILog
+    NSLog(@"center beforeChange: %@" , NSStringFromCGPoint(self.center));
+    NSLog(@"---------->\n sFrame:%@ sBounds:%@ \n mBounds:%@ \nwFrame:%@ wBounds:%@ \n frame:%@ bounds:%@ \n%s\n<---------", NSStringFromCGRect(self.superview.frame), NSStringFromCGRect(self.superview.bounds),
+                                                                           NSStringFromCGRect([UIScreen mainScreen].bounds),
+          NSStringFromCGRect([UIApplication sharedApplication].keyWindow.frame), NSStringFromCGRect([UIApplication sharedApplication].keyWindow.bounds),
+          NSStringFromCGRect(self.frame), NSStringFromCGRect(self.bounds), __PRETTY_FUNCTION__);
+#endif
+    CGFloat width = [UIScreen mainScreen].bounds.size.width;
+    CGFloat height = [UIScreen mainScreen].bounds.size.height;
+    if (!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
+      UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
+      if (UIDeviceOrientationIsLandscape(orientation)) {
+        width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+        height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+      }
+      if (UIDeviceOrientationIsPortrait(orientation)) {
+        width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+        height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+      }
+
+    }
+    CGPoint newCenter = CGPointMake(_ratioX*width, _ratioY*height);
     self.center = newCenter;
+#if wspxUILog
+    NSLog(@"@@@@@@@@@@@@@@@@@");
+    NSLog(@"Width:%lf Height:%lf", width, height);
+    NSLog(@"ratioX:%lf ratioY:%lf", _ratioX, _ratioY);
+    NSLog(@"center afterChange: %@" , NSStringFromCGPoint(self.center));
+    NSLog(@"Width:%lf Height:%lf", width, height);
+    NSLog(@"ratioX:%lf ratioY:%lf", _ratioX, _ratioY);
+    NSLog(@"@@@@@@@@@@@@@@@@@");
+#endif
+    if (_adsorption) {
+      [self adjustFrameWithAnimate:NO];
+    }
     if (!CGRectContainsRect(self.superview.bounds, self.frame)) {
       [self adjustFrameWithAnimate:YES];
     }
+    NSLog(@"center destion: %@" , NSStringFromCGPoint(self.center));
   }
+}
+
+- (void)logForOrientation {
+
+  NSLog(@"sFrame:%@ sBounds:%@ sCenter:%@\n frame:%@ bounds:%@ %s", NSStringFromCGRect(self.superview.frame), NSStringFromCGRect(self.superview.bounds), NSStringFromCGPoint(self.superview.center), NSStringFromCGRect(self.frame), NSStringFromCGRect(self.bounds), __PRETTY_FUNCTION__);
+  UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
+    switch (orientation) {
+      case UIDeviceOrientationUnknown:
+      {
+        
+      }
+        break;
+      case UIDeviceOrientationPortrait:
+      {
+        NSLog(@"竖屏");
+      }
+        break;
+      case UIDeviceOrientationLandscapeRight:
+      {
+        NSLog(@"home 在左边");
+      }
+        break;
+      case UIDeviceOrientationLandscapeLeft:
+      {
+        NSLog(@"home 在右边");
+      }
+        break;
+      case UIDeviceOrientationPortraitUpsideDown:
+      {
+        NSLog(@"颠倒的竖屏");
+      }
+        break;
+      case UIDeviceOrientationFaceUp:
+      {
+        NSLog(@"面朝上");
+      }
+        break;
+      case UIDeviceOrientationFaceDown:
+      {
+        NSLog(@"面朝下");
+      }
+        break;
+      default:
+      {
+        NSLog(@"Are U kidd me?");
+      }
+        break;
+    }
 }
 //- (void)saveMomentaryRatio {
 //  NSString *ratio = NSStringFromCGPoint(CGPointMake(_ratioX, _ratioY));
-//  [[NSUserDefaults standardUserDefaults] setObject:ratio forKey:kMCCMenuBallMomentaryRatio];
+//  [[NSUserDefaults standardUserDefaults] setObject:ratio forKey:kWSPXMenuBallMomentaryRatio];
 //  [[NSUserDefaults standardUserDefaults] synchronize];
 //}
 //
 //- (CGPoint)getMomentaryRatio {
-//  NSString *ratioString = [[NSUserDefaults standardUserDefaults] objectForKey:kMCCMenuBallMomentaryRatio];
+//  NSString *ratioString = [[NSUserDefaults standardUserDefaults] objectForKey:kWSPXMenuBallMomentaryRatio];
 //  CGPoint ratio = CGPointFromString(ratioString);
 //  return ratio;
 //}
-
 @end
