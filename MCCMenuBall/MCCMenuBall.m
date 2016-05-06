@@ -181,8 +181,16 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
 - (void)adjustFrameWithAnimate:(BOOL)animate {
   CGFloat radiu = _backGroundImageView.image.size.width/2;
   CGSize superViewSize = self.superview.bounds.size;
+  UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
+  if (UIDeviceOrientationIsLandscape(orientation)) {
+    superViewSize.width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+    superViewSize.height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+  }
+  if (UIDeviceOrientationIsPortrait(orientation)) {
+    superViewSize.width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+    superViewSize.height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+  }
   if (!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
-    UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
     if (UIDeviceOrientationIsLandscape(orientation)) {
       superViewSize.width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
       superViewSize.height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
@@ -198,14 +206,14 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
   if (self.center.x < radiu) {
     newFrame.origin.x = 0 + _margin.left;
 #if  wspxUILog
-    NSLog(@"超出左边");
+    NSLog(@"over left edge");
 #endif
   }
   
   if (self.center.x>superViewSize.width-radiu) {
     newFrame.origin.x = superViewSize.width-2*radiu - _margin.right;
 #if  wspxUILog
-    NSLog(@"超出右边");
+    NSLog(@"over right edge");
 #endif
   }
   
@@ -219,7 +227,7 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
       CGFloat newX = self.center.x - superViewCenter.x>0?(superViewSize.width - 2*radiu - _margin.right):_margin.left;
       newFrame.origin.x = newX;
 #if  wspxUILog
-      NSLog(@"在中间");
+      NSLog(@"in the middle");
 #endif
     }
   }
@@ -227,20 +235,17 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
   if (self.center.y < radiu) {
     newFrame.origin.y = 0 + _margin.top;
 #if  wspxUILog
-    NSLog(@"超出上边");
+    NSLog(@"over top edge");
 #endif
   }
   
   if (self.center.y > superViewSize.height - radiu) {
     newFrame.origin.y = superViewSize.height - 2*radiu - _margin.bottom;
 #if  wspxUILog
-    NSLog(@"超出下边");
+    NSLog(@"over bottom edge");
 #endif
   }
   
-  if (CGRectEqualToRect(CGRectIntegral(newFrame), CGRectIntegral(self.frame))) {
-    NSLog(@"ggg");
-  }
   if (CGPointEqualToPoint(newFrame.origin, self.frame.origin)) {
     return;
   }
@@ -269,8 +274,16 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
   CGFloat width = [UIScreen mainScreen].bounds.size.width;
   CGFloat height = [UIScreen mainScreen].bounds.size.height;
   
+  UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
+  if (UIDeviceOrientationIsLandscape(orientation)) {
+    width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+    height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+  }
+  if (UIDeviceOrientationIsPortrait(orientation)) {
+    width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+    height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+  }
   if (!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
-    UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
     if (UIDeviceOrientationIsLandscape(orientation)) {
       width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
       height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
@@ -337,19 +350,28 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
   if (!superview) {
     return;
   } else {
-
+    
     [self logForOrientation];
 #if wspxUILog
     NSLog(@"center beforeChange: %@" , NSStringFromCGPoint(self.center));
     NSLog(@"---------->\n sFrame:%@ sBounds:%@ \n mBounds:%@ \nwFrame:%@ wBounds:%@ \n frame:%@ bounds:%@ \n%s\n<---------", NSStringFromCGRect(self.superview.frame), NSStringFromCGRect(self.superview.bounds),
-                                                                           NSStringFromCGRect([UIScreen mainScreen].bounds),
+          NSStringFromCGRect([UIScreen mainScreen].bounds),
           NSStringFromCGRect([UIApplication sharedApplication].keyWindow.frame), NSStringFromCGRect([UIApplication sharedApplication].keyWindow.bounds),
           NSStringFromCGRect(self.frame), NSStringFromCGRect(self.bounds), __PRETTY_FUNCTION__);
 #endif
     CGFloat width = [UIScreen mainScreen].bounds.size.width;
     CGFloat height = [UIScreen mainScreen].bounds.size.height;
+    UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
+    if (UIDeviceOrientationIsLandscape(orientation)) {
+      width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+      height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+    }
+    if (UIDeviceOrientationIsPortrait(orientation)) {
+      width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+      height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
+    }
     if (!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
-      UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
+      
       if (UIDeviceOrientationIsLandscape(orientation)) {
         width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
         height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
@@ -358,7 +380,7 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
         width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
         height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
       }
-
+      
     }
     CGPoint newCenter = CGPointMake(_ratioX*width, _ratioY*height);
     self.center = newCenter;
@@ -382,51 +404,51 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
 }
 
 - (void)logForOrientation {
-
+  
   NSLog(@"sFrame:%@ sBounds:%@ sCenter:%@\n frame:%@ bounds:%@ %s", NSStringFromCGRect(self.superview.frame), NSStringFromCGRect(self.superview.bounds), NSStringFromCGPoint(self.superview.center), NSStringFromCGRect(self.frame), NSStringFromCGRect(self.bounds), __PRETTY_FUNCTION__);
   UIDeviceOrientation orientation = [UIDevice currentDevice].orientation;
-    switch (orientation) {
-      case UIDeviceOrientationUnknown:
-      {
-        
-      }
-        break;
-      case UIDeviceOrientationPortrait:
-      {
-        NSLog(@"竖屏");
-      }
-        break;
-      case UIDeviceOrientationLandscapeRight:
-      {
-        NSLog(@"home 在左边");
-      }
-        break;
-      case UIDeviceOrientationLandscapeLeft:
-      {
-        NSLog(@"home 在右边");
-      }
-        break;
-      case UIDeviceOrientationPortraitUpsideDown:
-      {
-        NSLog(@"颠倒的竖屏");
-      }
-        break;
-      case UIDeviceOrientationFaceUp:
-      {
-        NSLog(@"面朝上");
-      }
-        break;
-      case UIDeviceOrientationFaceDown:
-      {
-        NSLog(@"面朝下");
-      }
-        break;
-      default:
-      {
-        NSLog(@"Are U kidd me?");
-      }
-        break;
+  switch (orientation) {
+    case UIDeviceOrientationUnknown:
+    {
+      
     }
+      break;
+    case UIDeviceOrientationPortrait:
+    {
+      NSLog(@"home button on the bottom");
+    }
+      break;
+    case UIDeviceOrientationLandscapeRight:
+    {
+      NSLog(@"home button on the left");
+    }
+      break;
+    case UIDeviceOrientationLandscapeLeft:
+    {
+      NSLog(@"home button on the right");
+    }
+      break;
+    case UIDeviceOrientationPortraitUpsideDown:
+    {
+      NSLog(@"home button on the top");
+    }
+      break;
+    case UIDeviceOrientationFaceUp:
+    {
+      NSLog(@"face up");
+    }
+      break;
+    case UIDeviceOrientationFaceDown:
+    {
+      NSLog(@"face down");
+    }
+      break;
+    default:
+    {
+      NSLog(@"Are U kidd me?");
+    }
+      break;
+  }
 }
 //- (void)saveMomentaryRatio {
 //  NSString *ratio = NSStringFromCGPoint(CGPointMake(_ratioX, _ratioY));
