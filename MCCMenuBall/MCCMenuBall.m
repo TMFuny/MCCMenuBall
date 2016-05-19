@@ -190,17 +190,7 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
     superViewSize.width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
     superViewSize.height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
   }
-  if (!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
-    if (UIDeviceOrientationIsLandscape(orientation)) {
-      superViewSize.width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-      superViewSize.height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-    }
-    if (UIDeviceOrientationIsPortrait(orientation)) {
-      superViewSize.width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-      superViewSize.height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-    }
-    
-  }
+  
   CGRect newFrame = self.frame;
   
   if (self.center.x < radiu) {
@@ -283,17 +273,7 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
     width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
     height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
   }
-  if (!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
-    if (UIDeviceOrientationIsLandscape(orientation)) {
-      width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-      height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-    }
-    if (UIDeviceOrientationIsPortrait(orientation)) {
-      width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-      height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-    }
-    
-  }
+  
   _ratioX = self.center.x / width;
   _ratioY = self.center.y / height;
 }
@@ -370,18 +350,7 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
       width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
       height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
     }
-    if (!SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0")) {
-      
-      if (UIDeviceOrientationIsLandscape(orientation)) {
-        width = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-        height = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-      }
-      if (UIDeviceOrientationIsPortrait(orientation)) {
-        width = MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-        height = MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height);
-      }
-      
-    }
+    
     CGPoint newCenter = CGPointMake(_ratioX*width, _ratioY*height);
     self.center = newCenter;
 #if wspxUILog
