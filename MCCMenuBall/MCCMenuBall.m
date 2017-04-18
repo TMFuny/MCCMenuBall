@@ -222,8 +222,8 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
     }
   }
   
-  if (self.center.y < radiu) {
-    newFrame.origin.y = 0 + _margin.top;
+  if (self.center.y < radiu + 20) {
+    newFrame.origin.y = 0 + _margin.top + 20;
 #if  wspxUILog
     NSLog(@"over top edge");
 #endif
@@ -324,6 +324,7 @@ static const float kMCCMenuBallAnimateDuration = 0.3f;
 
 - (void)deviceOrientationDidChange:(NSNotification *)notification {
   if (self.isHidden) {
+    [self adjustFrameWithAnimate:NO];
     return;
   }
   UIView *superview = self.superview;
